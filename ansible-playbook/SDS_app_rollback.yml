@@ -1,0 +1,10 @@
+- hosts: all
+  any_errors_fatal: true
+
+  roles:
+    - check_env
+    - stop_services
+    - rollback_DB
+    - rollback_app
+    - start_services
+    - record_version

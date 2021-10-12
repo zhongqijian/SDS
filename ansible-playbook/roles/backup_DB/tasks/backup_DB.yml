@@ -1,0 +1,75 @@
+---
+#### begin checking backupDB identify file
+- name: flag DB update file
+  stat:
+    path: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/"
+  register: flag_identify
+#### finish checking backupDB identify file
+#### begin backing up database and checking result
+- name: start backup database
+  block:   
+    #存放日志文件
+    - name: create DB backup directory
+      file:
+        path: "{{ansible_env.HOME}}/upgrade/backup/{{version}}_{{update_timestamp.stdout}}"
+        state: directory
+    #DB备份在oracle服务器上
+    - name: show DB process info
+      debug:
+        msg: "LOG INFO: start backing up database!"
+    
+    - name: start running backup DB scripts
+      shell: |
+        dos2unix DB_backup.sh;
+        source ~/.bash_profile
+        set -m;sh DB_backup.sh {{DB_user1}} {{DB_pass1}} {{DB_user2}} {{DB_pass2}}
+      args:
+        chdir: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/"
+      async: 604800
+      poll: 0
+      register: db_backup_rc
+      ignore_errors: yes
+    
+    - name: backup script is running. Please wait
+      async_status:
+        jid: "{{ db_backup_rc.ansible_job_id }}"
+      register: db_check_backup_result
+      until: db_check_backup_result.finished
+      retries: 120972
+    
+    - name: copy database file to backup directory
+      shell: |
+        cp -rf {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/backdb.log  ./
+      args:
+        chdir: "{{ansible_env.HOME}}/upgrade/backup/{{version}}_{{update_timestamp.stdout}}/"
+
+    - name: check backupDB logs
+      shell: |
+        cat  {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/backdb.log
+      register: backupDB_check
+    
+    - name: show backupDB logs
+      debug:
+        msg: "LOG INFO: {{backupDB_check.stdout_lines}}"
+    
+    - name: check incorrect backupDB logs 
+      shell: |
+        cat  {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/backdb.log | grep -iv "{{database.regexp_exclude}}"|grep -iE "{{database.regexp}}" ;exit 0;
+      register: backupDB_ERROR
+    
+    - name: show incorrect backupDB 
+      debug:
+        msg: "LOG INFO: {{backupDB_ERROR.stdout_lines}}"
+    
+    - name: check backupDB log pass
+      fail:
+        msg: "LOG ERROR: backupDB log have errors, please check {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/backdb.log!"
+      when: ('ERROR' in backupDB_check.stdout)
+
+    - name: show DB process info
+      debug:
+        msg: "LOG INFO: backup database succeed !"
+
+  when: (flag_identify.stat.exists == True)
+
+#### finish backing up database and checking result

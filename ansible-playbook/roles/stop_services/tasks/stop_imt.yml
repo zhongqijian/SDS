@@ -1,0 +1,53 @@
+---
+- name: show imt process info
+  debug:
+    msg: "LOG INFO: stop out imt services."
+
+#### begin stopping service at the first time
+- name: stop out imt services
+  block:
+    #ImtServer
+    - name: stop ImtServer services
+      shell: |
+        cd /home/imt/dxs/imtserver/
+        set -m;sh app.sh stop
+      ignore_errors: true
+
+    - name: wait for ImtServer service to stop
+      wait_for:
+        timeout: 10
+
+    - name: check ImtServer status
+      shell: |
+        ps -ef|grep -w imtserver |grep -iv grep
+      register: ImtServer
+      ignore_errors: true
+
+    - name: show ImtServer status
+      debug:
+        msg: "{{ImtServer.stdout_lines}}"
+
+    #amq
+    - name: stop amq services
+      shell: |
+        cd /home/imt/dev/jboss-a-mq-6.3.0.redhat-283/bin
+        set -m;sh stop
+      ignore_errors: true
+
+    - name: wait for amq service to stop
+      wait_for:
+        timeout: 10
+
+    - name: check amq status
+      shell: |
+        ps -ef|grep -w Main |grep -iv grep
+      register: amq
+      ignore_errors: true
+
+    - name: show amq status
+      debug:
+        msg: "{{amq.stdout_lines}}"
+
+- name: show process info
+  debug:
+    msg: "LOG INFO: stop out imt services succeed. "

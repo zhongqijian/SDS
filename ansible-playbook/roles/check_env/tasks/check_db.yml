@@ -1,0 +1,31 @@
+---
+#### begin checking database connection
+- name: create deploy directory
+  file:
+    path: "{{ansible_env.HOME}}/upgrade/deploy"
+    state: directory
+
+- name: copy database connection scripts
+  copy:
+    src: oracle_check_connection.sh
+    dest: "{{ansible_env.HOME}}/upgrade/deploy/oracle_check_connection.sh"
+
+
+- name: check database connection
+  shell: |
+    source ~/.bash_profile;
+    dos2unix oracle_check_connection.sh;
+    sh oracle_check_connection.sh  {{DB_user1}} {{DB_pass1}} {{DB_user2}} {{DB_pass2}}
+  args:
+    chdir: "{{ansible_env.HOME}}/upgrade/deploy/"
+  register: db_check
+
+- name: show database check result
+  debug:
+    msg: "LOG INFO: database connection check result: {{db_check.stdout}}"
+
+- name: check database connection pass
+  fail:
+    msg: "LOG ERROR: check database connection failed"
+  when: (db_check.stdout != '0')
+#### finish checking database connection

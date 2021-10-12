@@ -1,0 +1,14 @@
+---
+version:
+devops_logs_path: ~/artifacts/devops_logs
+src_path: ~/artifacts/PTPS_upgrade_WW/
+System_Name: PTPS
+
+
+#disk_limit space (M),please ensure disk home unique.
+disk:
+  - {home: '/home$', limit: '400'}
+database:
+  regexp: 'ERROR|ORA-'
+  regexp_exclude: 'null'
+

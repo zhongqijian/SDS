@@ -1,0 +1,21 @@
+---
+#### begin rolling back app
+#imt
+- import_tasks: rollback_ngx.yml
+  when: (inventory_hostname in groups['NGX'])
+  tags:
+    - rollback_APP
+
+#imt
+- import_tasks: rollback_imt_app.yml
+  when: (inventory_hostname in groups['IMT'])
+  tags:
+    - rollback_APP
+
+#postrade
+- import_tasks: rollback_app_postrade.yml
+  when: (inventory_hostname in groups['APP'])
+  tags:
+  - rollback_APP
+
+#### finish rolling back app

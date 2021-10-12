@@ -1,0 +1,46 @@
+---
+#### begin uploading and checking md5
+
+- name: create new deploy version directory
+  file:
+    path: "{{ansible_env.HOME}}/upgrade/{{item}}"
+    state: directory
+  with_items:
+    - deploy
+    - backup
+
+- name: unarchive  V{{version}} package
+  unarchive:
+    src:  "{{src_path}}/PTPS_V{{version}}_W.tgz"
+    dest: "{{ansible_env.HOME}}/upgrade/deploy/"
+  
+    
+- name: check md5 and unarchive package
+  shell: |
+    tar -xf PTPS_V{{version}}_W.tgz && rm PTPS_V{{version}}_W.tgz
+    md5sum -c PTPS.md5
+  args:
+    chdir: "{{ansible_env.HOME}}/upgrade/deploy/"
+#### finish uploading and checking md5
+
+#### begin checking delete files list
+- name: check delete_lists status
+  stat:
+    path: "{{ansible_env.HOME}}/upgrade/deploy/{{version}}/delete_lists"
+  register: delete_lists
+
+- name: check space characters in delete list
+  block:
+    - name: get space characters in delete list
+      shell: |
+        find . -type f |xargs cat |grep -iv "[[:space:]]$"|grep -iE "[[:space:]]" || echo ''
+      args:
+        chdir: "{{ansible_env.HOME}}/upgrade/deploy/{{version}}/delete_lists/"
+      register: space_check
+
+    - name: check space characters pass
+      fail:
+        msg: "LOG ERROR: space characters in delete_lists: {{space_check.stdout_lines}}"
+      when: (space_check.stdout != '')
+  when: delete_lists.stat.exists
+#### finish checking delete files list

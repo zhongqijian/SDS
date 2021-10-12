@@ -1,0 +1,61 @@
+---
+#### begin checking  postrade backup
+- name: get postrade V{{version}} backup status
+  stat: 
+    path: "{{ansible_env.HOME}}/app/postrade/backup/{{version}}"
+  register: postrade_backup
+
+#如果目录不存在
+- name: check postrade V{{version}} backup
+  debug: 
+    msg: "LOG: not involved postrade update."
+  when: postrade_backup.stat.exists == False
+
+#### begin rolling back app files
+
+- name: start rolling back postrade
+  block:
+    - name: show postrade process info
+      debug:
+        msg: "LOG INFO: begin rolling back postrade ."
+
+    #####A清空部署目录，
+    #1.读取文件列表
+    - name: list the postrade files 
+      shell: ls
+      args:
+        chdir: "{{ansible_env.HOME}}/app/postrade/deploy"
+      register: postrade_files_list
+
+    #2.将备份文件还原,使用with_items属性，将postrade_files_list变量以lines的形式输出，再借助file模块循环删除每个文件
+    - name: clear postrade deploy file if it does not exist
+      file:
+        path: "{{ansible_env.HOME}}/app/postrade/deploy/{{ item }}"
+        state: absent
+      with_items:
+        - "{{ postrade_files_list.stdout_lines }}"
+    #postrade.tar.gz
+    - name: rollback bas_app_postrade
+      shell: |
+        tar -zxvf {{ansible_env.HOME}}/app/postrade/backup/{{version}}/postrade.tar.gz ./
+      args:
+        chdir: "{{ansible_env.HOME}}/app/postrade/deploy"
+
+    #tomcat and properties
+    - name: rollback web.xml and properties
+      shell: |
+        tar -zxvf {{ansible_env.HOME}}/app/postrade/backup/{{version}}/postrade.tar.gz ./
+        cp -r /home/ptd/app/postrade/backup/{{version}}/web.xml /home/ptd/tomcat7_postrade/conf/web.xml
+        cp -r /home/ptd/app/postrade/backup/{{version}}/postrade.properties /home/ptd/app/postrade/config/
+        cd /home/ptd/app/postrade/backup/{{version}} && crontab -r && crontab V6.1.5.crontab
+        rm {{ansible_env.HOME}}/allBin/cleanLogs_linux.sh
+      args:
+        chdir: "{{ansible_env.HOME}}/app/postrade/deploy"
+
+    - name: show postrade process info
+      debug:
+        msg: "LOG INFO: rollback postrade succeed."
+    
+  when: postrade_backup.stat.exists
+
+#### finish rolling back app files

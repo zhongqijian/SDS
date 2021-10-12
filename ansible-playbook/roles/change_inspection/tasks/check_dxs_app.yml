@@ -1,0 +1,22 @@
+---
+#### begin Verify upgrade results
+- name: verification V{{version}} dxs upgrade results
+  stat:
+    path: "{{ansible_env.HOME}}/PTPS_dxs/cfg/PTPS_dxs.cfg"
+  register: dxs_results
+
+###begin check
+- name: begin checking dxs app change
+  block:
+    - name: get After dxs upgrade dxs config
+      shell: |
+        if [ -f {{ansible_env.HOME}}/dev/jboss-a-mq-6.3.0.redhat-283/etc/org.ops4j.pax.web.cfg ]; then
+           grep -i '8161' {{ansible_env.HOME}}/dev/jboss-a-mq-6.3.0.redhat-283/etc/org.ops4j.pax.web.cfg
+        else
+           exit 1;
+        fi
+    - name: show DXS APP change info
+      debug:
+        msg: "LOG INFO: dxs change succeed. "
+  when: (dxs_results.stat.exists)
+#### finish checking DXS change

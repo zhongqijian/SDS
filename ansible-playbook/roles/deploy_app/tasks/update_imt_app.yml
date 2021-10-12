@@ -1,0 +1,77 @@
+---  
+#### begin checking  APP_postrade update
+- name: copy out imt update file
+  copy:
+    src: activemq.xml
+    dest: "{{ansible_env.HOME}}/upgrade/activemq.xml"
+
+- name: GET IMT_APP V{{version}} update file
+  stat:
+    path: "{{ansible_env.HOME}}/upgrade/activemq.xml"
+  register: imt_app_file
+#jboss
+- name: GET dev crontab.txt file
+  stat:
+    path: "{{ansible_env.HOME}}/dev/crontab.txt"
+  register: dev_crontab_file
+#dxs
+- name: GET dxs crontab.txt file
+  stat:
+    path: "{{ansible_env.HOME}}/dxs/crontab.txt"
+  register: dxs_crontab_file
+#imtserver 
+- name: GET imtserver crontab.txt file
+  stat:
+    path: "{{ansible_env.HOME}}/dxs/imtserver/crontab.txt"
+  register: imtserver_crontab_file
+  
+  
+- name: rm crontab.txt file
+  block:
+    #删除 Jboss crontab.txt 工程
+    - name: rm jboss crontab.txt
+      shell: |
+        rm {{ansible_env.HOME}}/dev/crontab.txt
+  when: dev_crontab_file.stat.exists
+  #dxs
+  block:
+    #删除 dxs crontab.txt 工程
+    - name: rm dxs crontab.txt
+      shell: |
+        rm {{ansible_env.HOME}}/dxs/crontab.txt
+  when: dxs_crontab_file.stat.exists
+  #imtserver
+  block:
+    #删除 dxs crontab.txt 工程
+    - name: rm imtserver crontab.txt
+      shell: |
+        rm {{ansible_env.HOME}}/dxs/imtserver/crontab.txt
+  when: imtserver_crontab_file.stat.exists
+  
+- name: start update imt
+  block:
+    #### begin updating postarde
+    - name: update out imt
+      debug:
+        msg: "LOG INFO: begin updating imt app project. "
+    #升级imt 工程
+    - name: update imt app
+      shell: |
+        #get ip info
+        imt_ip_master=`cat /home/imt/dxs/imtserver/cfg/imt_server.cfg|grep ^ServerAddress|awk -F "=" '{print $5}'|awk -F ")" '{print $1}'`
+        imt_ip_slave=`cat /home/imt/dxs/imtserver/cfg/imt_server.cfg|grep ^ServerAddress|awk -F "=" '{print $8}'|awk -F ")" '{print $1}'`
+        #imt_server.cfg
+        sed -i "s/ServerAddress=.*/ServerAddress=(ADDRESS_LIST=(ADDRESS=(IP=${imt_ip_master})(PORT=61616)(USER=ptrd)(PASSWORD=Ptrd_0617))(ADDRESS=(IP=${imt_ip_slave})(PORT=61616)(USER=ptrd)(PASSWORD=Ptrd_0617)))/g" /home/imt/dxs/imtserver/cfg/imt_server.cfg
+        #upgrade activemq
+        cp -r {{ansible_env.HOME}}/upgrade/activemq.xml /home/imt/dev/jboss-a-mq-6.3.0.redhat-283/etc/
+        #update amq port
+        sed -i "s/^org.osgi.service.http.port=.*/org.osgi.service.http.port=8161/g" /home/imt/dev/jboss-a-mq-6.3.0.redhat-283/etc/system.properties
+        sed -i "s/^org.osgi.service.http.port=.*/org.osgi.service.http.port=8161/g" /home/imt/dev/jboss-a-mq-6.3.0.redhat-283/etc/org.ops4j.pax.web.cfg
+        sed -i "s/187/283/g" {{ansible_env.HOME}}/dxs/imtserver/Clear_log.sh 
+    #提示升级结果
+    - name: show imt app process info
+      debug:
+        msg: "LOG INFO: update imt app services succeed. "
+    
+  when: imt_app_file.stat.exists
+#### finish updating app

@@ -1,0 +1,29 @@
+
+- name: check record dir
+  stat:
+    path: "/home/appspt/Version/"
+  register: record_dir
+  
+- name: create record dir
+  fail: 
+    msg: "ERROR: INFO DIR DOES NOT EXIST! Please check /home/appspt/Version/ !"
+  when: record_dir.stat.exists == False
+  
+- name: check record detail file
+  stat:
+    path: "/home/appspt/Version/{{appName}}.ver"
+  register: record_detail
+  
+- name: create record detail
+  shell: |
+    >  "{{appName}}.ver"
+  args:
+    chdir: "/home/appspt/Version"
+  when: record_detail.stat.exists == False
+  
+- name: record detail info
+  shell: |
+    ver=`echo -n  {{version}} | awk -F'_' '{print$1}'`
+    echo "`date \"+%Y%m%d %H:%M:%S\"` CFETS-APP {{appName}} {{buildstate}} to V${ver} is succeed." >> "{{appName}}.ver"
+  args:
+    chdir: "/home/appspt/Version"

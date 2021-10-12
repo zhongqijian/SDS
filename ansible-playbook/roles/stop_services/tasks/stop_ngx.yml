@@ -1,0 +1,32 @@
+---
+- name: show ngx process info
+  debug:
+    msg: "LOG INFO: stop out ngx services."
+
+#### begin stopping service at the first time
+- name: stop out ngx services
+  block:
+    #ngx
+    - name: stop out ngx services
+      shell: |
+        cd /home/ptd/app/rg/sbin
+        set -m;sh stop.sh
+      ignore_errors: true
+
+    - name: wait for out ngx service to stop
+      wait_for:
+        timeout: 10
+
+    - name: check out ngx status
+      shell: |
+        ps -ef|grep -v grep|grep nginx
+      register: ngx
+      ignore_errors: true
+
+    - name: show out ngx status
+      debug:
+        msg: "{{ngx.stdout_lines}}"
+
+- name: show process info
+  debug:
+    msg: "LOG INFO: stop ngx services succeed. "

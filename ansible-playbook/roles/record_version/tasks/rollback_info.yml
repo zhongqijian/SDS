@@ -1,0 +1,99 @@
+- name: check record dir
+  stat:
+    path: "/home/appspt/Version"
+  register: record_dir
+  
+- name: create record dir
+  fail: 
+    msg: "ERROR: check dir!"
+  when: record_dir.stat.exists == False
+  
+- name: check record detail file
+  stat:
+    path: "/home/appspt/Version/{{appName}}.info"
+  register: record_detail
+  
+- name: create record detail
+  shell: |
+    >  "{{appName}}.info";
+    echo -n "NULL" >  "{{appName}}.ver"
+  args:
+    chdir: "/home/appspt/Version"
+  when: record_detail.stat.exists == False
+
+
+- name: get current version
+  shell: |
+    echo "{{version}}" | awk -F . '{print $1"."$2"."$3}'
+  register: current_ver_rollback
+
+- name: get current version
+  shell: |
+    cat {{appName}}.ver | tail -1 | awk '{print$5}'
+  args:
+    chdir: "/home/appspt/Version"
+  register: current_ver
+
+- name: show ver
+  debug:
+    msg: "{{current_ver}}.stdout_line"
+
+
+- name: remove current version
+  shell: |
+    sed -i '/{{current_ver_rollback.stdout}}/d' {{appName}}.ver
+    sed -i  '/^$/d' {{appName}}.ver
+  args:
+    chdir: "/home/appspt/Version"
+
+
+- name: show remove debug msg
+  debug:
+    msg: "{{current_ver}}.stdout_line"
+
+- name: remove current version to ansible
+  shell: |
+    sed -i '/{{current_ver_rollback.stdout}}/d' "{{release_env}}_{{appName}}.ver"
+    sed -i  '/^$/d' "{{release_env}}_{{appName}}.ver"
+  args:
+    chdir: "/home/appspt/Version"
+  connection: local
+
+
+- name: get rollback version
+  shell: |
+   cat {{appName}}.ver | tail -1  | awk '{print$5}'
+  args:
+    chdir: "/home/appspt/Version"
+  register: ver
+  when: buildstate == "Rollback"
+
+- name: get rollback version
+  shell: |
+    echo -n  "{{version}}" | awk -F'_' '{print$1}'
+  args:
+    chdir: "/home/appspt/Version"
+  register: rollback_ver
+
+ 
+- name: record detail info
+  shell: |
+    _date="`date \"+%Y%m%d %H:%M:%S\"`";
+    f_ver="{{ver.stdout}}"
+    if [ "{{ver.stdout}}" == "" ] ; then f_ver="NULL"; fi;
+    echo "${_date} CFETS-APP {{appName}} Rollback V{{rollback_ver.stdout}}" >> "{{appName}}.info"
+    echo "${_date} CFETS-APP {{appName}} {{buildstate}} from {{current_ver.stdout}} to ${f_ver} is succeed" >> "{{appName}}.info"
+  args:
+    chdir: "/home/appspt/Version"
+
+- name: record detail info to ansible
+  shell: |
+    _date="`date \"+%Y%m%d %H:%M:%S\"`";
+    f_ver="{{ver.stdout}}"
+    if [ "{{ver.stdout}}" == "" ] ; then f_ver="NULL"; fi;
+    echo "{{ansible_default_ipv4.address}} {{ansible_hostname}} ${_date} CFETS-APP {{appName}} Rollback V{{rollback_ver.stdout}}" >> "{{release_env}}_{{appName}}.info"
+    echo "{{ansible_default_ipv4.address}} {{ansible_hostname}} ${_date} CFETS-APP {{appName}} {{buildstate}} from {{current_ver.stdout}} to ${f_ver} is succeed" >> "{{release_env}}_{{appName}}.info"
+  args:
+    chdir: "/home/appspt/Version"
+  connection: local
+

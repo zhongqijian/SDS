@@ -1,0 +1,35 @@
+---
+#### begin checking  postrade backup
+- name: get out imt app V{{version}} backup status
+  stat: 
+    path: "{{ansible_env.HOME}}/upgrade/backup/{{version}}/"
+  register: imt_backup
+
+#如果目录不存在
+- name: check out imt V{{version}} backup
+  debug: 
+    msg: "LOG: not involved imt update."
+  when: imt_backup.stat.exists == False
+
+#### begin rolling back app files
+
+- name: start rolling back out imt
+  block:
+    - name: show out imt process info
+      debug:
+        msg: "LOG INFO: begin rolling back out imt ."
+
+    #imt app
+    - name: rollback out imt app
+      shell: |
+        cp -r {{ansible_env.HOME}}/upgrade/backup/{{version}}/activemq.xml {{ansible_env.HOME}}/dev/jboss-a-mq-6.3.0.redhat-283/etc/
+        cp -r {{ansible_env.HOME}}/upgrade/backup/{{version}}/imt_server.cfg {{ansible_env.HOME}}/dxs/imtserver/cfg/imt_server.cfg 
+        cp -r {{ansible_env.HOME}}/upgrade/backup/{{version}}/system.properties  {{ansible_env.HOME}}/dev/jboss-a-mq-6.3.0.redhat-283/etc/
+        cp -r {{ansible_env.HOME}}/upgrade/backup/{{version}}/org.ops4j.pax.web.cfg  {{ansible_env.HOME}}/dev/jboss-a-mq-6.3.0.redhat-283/etc/org.ops4j.pax.web.cfg
+    - name: show out imt process info
+      debug:
+        msg: "LOG INFO: rollback out imt succeed."
+    
+  when: imt_backup.stat.exists
+
+#### finish rolling back app files

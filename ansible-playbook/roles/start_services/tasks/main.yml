@@ -1,0 +1,17 @@
+---
+#### begin stopping services
+- import_tasks: start_ngx.yml
+  when: (inventory_hostname in groups['NGX'])
+  tags:
+    - start_services
+    
+- import_tasks: start_imt.yml
+  when: (inventory_hostname in groups['IMT'])
+  tags:
+    - start_services
+    
+- import_tasks: start_app.yml
+  when: (inventory_hostname in groups['APP'])
+  tags:
+    - start_services
+#### finish stopping services

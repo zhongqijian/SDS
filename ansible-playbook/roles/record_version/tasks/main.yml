@@ -1,0 +1,44 @@
+- name: read update timestamp and create backup directory
+  block:
+    - name: read update timestamp
+      shell: |
+        cat timestamp.info
+      args:
+        chdir: "{{ansible_env.HOME}}/upgrade/deploy/"
+      register: update_timestamp
+      tags:
+        - update_info
+
+- name: check update record info
+  shell: |
+    if [ -f {{ansible_env.HOME}}/upgrade/backup/{{version}}_{{update_timestamp.stdout}}/update_record_info ];then
+        grep -i 'record' {{ansible_env.HOME}}/upgrade/backup/{{version}}_{{update_timestamp.stdout}}/update_record_info;
+    else
+        echo "NULL"
+    fi
+  register: record_msg
+  tags:
+    - update_info
+
+- name: check rollback record info
+  shell: |
+    if [ -f {{ansible_env.HOME}}/upgrade/backup/{{version}}/update_record_info ];then
+        grep -i 'record' {{ansible_env.HOME}}/upgrade/backup/{{version}}/update_record_info;
+    else
+        echo "NULL"
+    fi
+  register: record_msg
+  tags:
+  - rollback_info
+
+
+- import_tasks: update_info.yml
+  when: record_msg.stdout.find("record") != -1
+  tags:
+    - update_info
+
+
+- import_tasks: rollback_info.yml
+  when: record_msg.stdout.find("record") != -1
+  tags:
+    - rollback_info

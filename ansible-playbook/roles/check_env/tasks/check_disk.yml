@@ -1,0 +1,16 @@
+---
+#### begin checking disk space in the directory  
+- name: "check {{item.home}} hardware size"
+  shell: df -hPm|grep {{item.home}} |awk '{print$4}'
+  register: disk_size
+
+- name: "show {{item.home}} hardware size"
+  debug:
+    msg: " Disk space {{item.home}} is {{disk_size.stdout}}M !"
+
+- name: "check disk {{item.home}} pass!"
+  fail:
+   msg: "LOG ERROR: Disk space {{item.home}} is {{disk_size.stdout}}M , Disk space is not Enough!"
+  when: disk_size.stdout|int < item.limit|int
+
+#### finish checking disk space in the directory

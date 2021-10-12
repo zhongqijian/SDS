@@ -1,0 +1,17 @@
+[NGX]
+172.24.153.11
+172.24.153.12
+
+[APP]
+172.24.170.25
+172.24.170.26
+
+[IMT]
+172.24.170.27 ansible_ssh_user=imt
+172.24.170.28 ansible_ssh_user=imt
+
+[DB_CLIENT]
+172.24.170.25
+
+[all:vars]
+ansible_ssh_user=ptd

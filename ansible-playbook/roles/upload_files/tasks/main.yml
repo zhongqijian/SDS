@@ -1,0 +1,30 @@
+---
+#### begin uploading deploy files and reading timestamp
+- name: upload deploy files
+  block:
+    - import_tasks: upload_files.yml
+    
+    - name: deploy timestamp file
+      copy:
+        src: "{{src_path}}/timestamp.info"
+        dest: "{{ansible_env.HOME}}/upgrade/deploy/timestamp.info"
+
+    - name: read update timestamp
+      shell: |
+        cat timestamp.info
+      args:
+        chdir: "{{ansible_env.HOME}}/upgrade/deploy/"
+      register: update_timestamp
+
+    - name: show update timestamp
+      debug: 
+        msg: "This udpate timestamp: #timestamp#{{version}}_{{update_timestamp.stdout}}##"
+
+    - name: deploy update info file---{{update_timestamp.stdout}}
+      copy:
+        src: "{{devops_logs_path}}/PTPS_update_{{version}}_{{update_timestamp.stdout}}.txt"
+        dest: "{{ansible_env.HOME}}/upgrade/backup/PTPS_update_{{version}}_{{update_timestamp.stdout}}.txt"
+                                  
+  tags:
+    - upload_files
+#### finish uploading deploy files and reading timestamp

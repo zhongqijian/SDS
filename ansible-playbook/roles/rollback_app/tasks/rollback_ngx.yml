@@ -1,0 +1,35 @@
+---  
+#### begin checking  NGX rollback
+- name: GET OUT NGX V{{version}} rollback file
+  stat: 
+    path: "{{ansible_env.HOME}}/app/rg"
+  register: ngx_file
+
+- name: start rollback OUT NGX
+  block:
+    #### begin updating postarde
+    - name: rollback OUT NGX project
+      debug:
+        msg: "LOG INFO: begin rollback OUT NGX project. "
+
+
+    - name: rollback out ngx app 
+      shell: |
+        rm -rf {{ansible_env.HOME}}/allBin/
+        
+    - name: rollback OUT NGX crontab
+      shell: |
+        source /etc/profile
+        crontab -r
+        crontab {{version}}.crontab
+        cp -r nginx.conf /home/ptd/app/rg/conf/
+      args:
+        chdir: "{{ansible_env.HOME}}/var/backup/{{version}}/"
+        
+    #提示升级结果
+    - name: show OUT NGX process info
+      debug:
+        msg: "LOG INFO: rollback OUT NGX services succeed. "
+    
+  when: ngx_file.stat.exists
+#### finish updating app

@@ -1,0 +1,34 @@
+---
+#### begin archive  out imt  files
+- name: get out imt V{{version}} archive files
+  stat: 
+    path: "{{ansible_env.HOME}}/upgrade/backup/"
+  register: postrade_archive
+
+#如果目录不存在
+- name: check out imt V{{version}} backup directory
+  debug: 
+    msg: "LOG: not involved out imt update."
+  when: postrade_archive.stat.exists == False
+
+#### begin archive files
+
+- name: start archiving out imt files
+  block:
+    - name: show out imt process info
+      debug:
+        msg: "LOG INFO: begin archiving out imt files ."
+
+    - name: archiving out imt files .......
+      shell: |
+        ls | grep -v {{version}} |xargs rm -rf 
+      args:
+        chdir: "{{ansible_env.HOME}}/upgrade/backup/"
+
+    - name: show out imt process info
+      debug:
+        msg: "LOG INFO: archiving out imt succeed."
+    
+  when: postrade_archive.stat.exists
+
+#### finish archive out imt files

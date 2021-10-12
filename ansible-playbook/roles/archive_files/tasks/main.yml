@@ -1,0 +1,28 @@
+---
+#### begin archiveing old files
+- name: show process info
+  debug:
+    msg: "LOG INFO begin archiving files ...... "
+  tags:
+    - archive_files
+
+#### begin archive files ......
+#NGX
+- import_tasks: archive_ngx.yml
+  when: (inventory_hostname in groups['NGX'])
+  tags:
+    - archive_files
+
+#IMT
+- import_tasks: archive_imt.yml
+  when: (inventory_hostname in groups['IMT'])
+  tags:
+    - archive_files
+
+#postrade
+- import_tasks: archive_app_postrade.yml
+  when: (inventory_hostname in groups['APP'])
+  tags:
+    - archive_files
+
+#### finish archive files ......

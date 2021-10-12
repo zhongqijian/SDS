@@ -1,0 +1,46 @@
+---
+#### begin rolling back database and checking result
+- name: show db process info
+  debug:
+    msg: "LOG INFO: start rolling back database!"
+
+- name: start rolling back DB scripts
+  shell: |
+    source ~/.bash_profile;
+    dos2unix DB_rollback.sh;
+    set -m;sh DB_rollback.sh  {{DB_user1}} {{DB_pass1}} {{DB_user2}} {{DB_pass2}};
+  args:
+    chdir: "{{ansible_env.HOME}}/upgrade/backup/{{version}}/db"
+
+  async: 604800
+  poll: 0
+  register: db_rollback_rc
+  ignore_errors: yes
+
+- name:  rollback DB script is runing. Please wait
+  async_status:
+    jid: "{{ db_rollback_rc.ansible_job_id }}"
+  register: db_check_rollback_result
+  until: db_check_rollback_result.finished
+  retries: 120972
+
+- name: check rollback DB logs
+  shell: |
+    cat  {{ansible_env.HOME}}/upgrade/backup/{{version}}/db/log/rollbackdb.log
+  register: rollbackDB_check
+
+- name: show rollback DB logs
+  debug:
+     msg: "LOG INFO: {{rollbackDB_check.stdout_lines}}"
+
+- name: check rollback DB logs pass
+  fail:
+    msg: "LOG ERROR: there are ERRORS in {{ansible_env.HOME}}/upgrade/backup/{{version}}/db/log/rollbackdb.log, please check rollback DB scripts!"
+  when: ('ERROR' in rollbackDB_check.stdout)
+
+
+- name: show db process info
+  debug:
+    msg: "LOG INFO: rollback database succeed!"
+
+#### finish rolling back database and checking result

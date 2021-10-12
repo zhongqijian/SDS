@@ -1,0 +1,24 @@
+---
+#### begin checking disk space 
+- include_tasks: check_disk.yml
+  with_items:
+    - "{{disk}}"
+  tags:
+    - check_env
+
+#### finish checking disk space
+ 
+#### begin checking connection user
+- name:  check user pass!
+  fail:
+    msg: "LOG ERROR: The ssh user is ERROR !"
+  when: (ansible_user_id) != (ansible_ssh_user)
+  tags:
+    - check_env
+
+#### finish checking connection user
+#- import_tasks: check_db.yml
+#  when: (inventory_hostname in groups['DB_CLIENT'])
+#  tags:
+#    - check_env
+#### finish checking  database

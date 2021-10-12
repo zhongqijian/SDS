@@ -1,0 +1,43 @@
+---
+- name: start out postrade process
+  debug:
+    msg: "LOG INFO: start out postrade services. "
+
+#### begin stopping service at the first time
+- name: start out postrade services
+  block:
+    #out postrade
+    - name: start out postrade member services
+      shell: |
+        source /etc/profile
+        set -m;sh /home/ptd/bin/appstart.sh
+      ignore_errors: true
+
+    - name: wait for out postrade service to start
+      wait_for:
+        timeout: 6
+
+    - name: check out postrade status
+      shell: |
+        ps -ef|grep tomcat7_postrade|grep -v grep
+      register: postrade_out
+      ignore_errors: true
+
+    - name: show out postrade status
+      debug:
+        msg: "{{postrade_out.stdout_lines}}"
+
+    - name: check out cometDServer status
+      shell: |
+        ps -ef|grep tomcat7_cometDServer|grep -v grep
+      register: cometDServer_out
+      ignore_errors: true
+
+    - name: show out cometDServer status
+      debug:
+        msg: "{{cometDServer_out.stdout_lines}}"   
+        
+#### show finish stopping service 
+- name: show process info
+  debug:
+    msg: "LOG INFO: start out postrade services succeed. "

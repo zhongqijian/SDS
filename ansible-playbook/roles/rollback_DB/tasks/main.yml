@@ -1,0 +1,27 @@
+---
+#### begin checking rollbackDB file and rolling back database
+- name: start rolling back Intranet database
+  block:
+    - name: get database V{{version}} backup status
+      stat: 
+        path: "{{ansible_env.HOME}}/upgrade/backup/{{version}}/db"
+      register: database_backup
+    
+    - name: check {{version}} backup
+      fail: 
+        msg: "LOG ERROR: backup {{version}} directory is absent."
+      when: database_backup.stat.exists == False
+
+    - name: check Intranet rollback DB file 
+      stat: 
+        path: "{{ansible_env.HOME}}/upgrade/backup/{{version}}/db/DB_rollback.sh"
+        
+      register: rollbackDB_file
+    
+    - import_tasks: rollback_DB.yml
+      when: (rollbackDB_file.stat.exists) 
+      
+  when: (inventory_hostname in groups['DB_CLIENT'])
+  tags:
+    - rollback_DB
+#### finish checking rollbackDB file and rolling back database

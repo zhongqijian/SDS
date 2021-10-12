@@ -1,0 +1,23 @@
+---
+#### begin Verify upgrade results
+- name: verification V{{version}} bas upgrade results
+  stat:
+    path: "{{ansible_env.HOME}}/app/postrade/deploy/WEB-INF/classes/resources/version.txt"
+  register: postrade_version
+
+###begin check
+- name: begin checking bas app change
+  block:
+    - name: get After bas upgrade version
+      shell: |
+        update_after_version=`cat /home/ptd/app/postrade/deploy/WEB-INF/classes/resources/version.txt |awk -F "V" '{print $2}'`
+        if [ ${update_after_version} = {{version}} ]; then
+           exit 0;
+        else
+           exit 1;
+        fi
+    - name: show BAS APP change info
+      debug:
+        msg: "LOG INFO: bas app change succeed. "
+  when: (postrade_version.stat.exists)
+#### finish checking app change

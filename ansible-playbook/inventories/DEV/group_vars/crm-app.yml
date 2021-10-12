@@ -1,0 +1,5 @@
+---
+#disk_limit space (M),please ensure disk home unique.
+disk:
+  - {home: '/home$', limit: '400'}
+#disk_limit space (M),please ensure disk home unique.

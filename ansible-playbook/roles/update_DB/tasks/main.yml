@@ -1,0 +1,32 @@
+---
+- name: start updating database
+  block:
+    #### begin getting timestamp
+    - name: read update timestamp
+      shell: |
+        cat timestamp.info
+      args:
+        chdir: "{{ansible_env.HOME}}/upgrade/deploy/"
+      register: update_timestamp
+
+    - name: show update timestamp
+      debug: 
+        msg: "LOG INFO: The udpated timestamp: #timestamp#{{version}}_{{update_timestamp.stdout}}##"
+    #### finish getting timestamp
+  tags:
+    - update_DB
+- name: start updating Intranet database 
+  block:
+  #### begin checking and updating database
+    - name: check update DB file 
+      stat: 
+        path: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/"
+      register: updateDB_file
+    
+    - import_tasks: update_DB.yml
+      when: (updateDB_file.stat.exists) 
+    #### finish checking and updating database
+  when: (inventory_hostname in groups['DB_CLIENT'])
+  tags:
+    - update_DB
+  

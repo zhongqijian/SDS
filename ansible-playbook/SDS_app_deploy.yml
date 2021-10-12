@@ -1,0 +1,14 @@
+- hosts: all
+  any_errors_fatal: true
+
+  roles:
+    - check_env
+    - upload_files
+    - stop_services
+    - backup_DB
+    - update_DB
+    - deploy_app
+    - change_inspection
+    - start_services
+    - record_version
+    - archive_files

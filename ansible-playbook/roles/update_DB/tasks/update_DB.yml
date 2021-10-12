@@ -1,0 +1,66 @@
+---
+#### begin updating database
+- name: show db process info
+  debug:
+    msg: "LOG INFO: start updating database!"
+
+- name: update database
+  shell: |
+    source ~/.bash_profile;
+    dos2unix DB_update.sh
+    echo "" >log/upgrade_sqlplus.log
+    set -m;sh DB_update.sh  {{DB_user1}} {{DB_pass1}} {{DB_user2}} {{DB_pass2}} >>log/upgrade_sqlplus.log
+  args:
+    chdir: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/"
+  async: 604800
+  poll: 0
+  register: db_update_rc
+  ignore_errors: yes
+
+- name: update.sh script is runing. Please wait
+  async_status:
+    jid: "{{ db_update_rc.ansible_job_id }}"
+  register: db_check_update_result
+  until: db_check_update_result.finished
+  retries: 120972
+
+- name: copy updateDB logs
+  shell: |
+    source ~/.bash_profile;
+    cp -r {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db {{ansible_env.HOME}}/upgrade/backup/{{version}}_{{update_timestamp.stdout}}/
+    
+#### finish updating database
+
+#### begin checking database update result
+- name: check updateDB logs
+  shell: |
+    cat  {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/upgrade_sqlplus.log
+  register: updateDB_check
+
+
+- name: show updateDB logs
+  debug:
+    msg: "LOG INFO: {{updateDB_check.stdout_lines}}"
+
+
+- name: check updateDB incorrect logs
+  shell: |
+    cat  {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/upgrade_sqlplus.log |grep -iv "{{database.regexp_exclude}}"| grep -iE "{{database.regexp}}" ;exit 0;
+  register: updateDB_ERROR
+  
+
+- name: show updateDB incorrect logs
+  debug:
+    msg: "LOG INFO: {{updateDB_ERROR.stdout_lines}}"
+
+
+- name: check updateDB log pass
+  fail:
+    msg: "LOG ERROR: there are ERRORS in updateDB log, please check {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/upgrade_sqlplus.log!"
+  when: ('PTRD UPDATE FAIL!' in updateDB_check.stdout)
+
+- name: show updateDB results
+  debug:
+    msg: "LOG INFO: updateDB OK , log path: {{ansible_env.HOME}}/upgrade/backup/{{version}}_{{update_timestamp.stdout}}/log/upgrade_sqlplus.log !"
+
+#### finish checking database update result
