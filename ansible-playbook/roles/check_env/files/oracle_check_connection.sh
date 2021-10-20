@@ -1,7 +1,7 @@
 #check database connection
 db_user=$1
 db_pass=$2
-db_sid=APP_PTRDDBSVC
+db_sid=APP_SDSDBSVC
 
 sqlplus  -S ${db_user}/${db_pass}@${db_sid} <<EOF
       exit;

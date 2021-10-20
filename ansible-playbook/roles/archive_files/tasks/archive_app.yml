@@ -1,0 +1,34 @@
+---
+#### begin archive  sds   files
+- name: get sds_process V{{version}} archive files
+  stat: 
+    path: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/db"
+  register: sds_archive
+
+#如果目录不存在
+- name: check sds V{{version}} backup directory
+  debug: 
+    msg: "LOG: not involved out sds update."
+  when: sds_archive.stat.exists == False
+
+#### begin archive files
+
+- name: start archiving sds files
+  block:
+    - name: show sds process info
+      debug:
+        msg: "LOG INFO: begin archiving sds files ."
+
+    - name: archiving sds files .......
+      shell: |
+        find ./ -mtime +30 -name "20*" -exec rm -rf {} \;
+      args:
+        chdir: "{{ansible_env.HOME}}/upgrade/backup"
+
+    - name: show sds process info
+      debug:
+        msg: "LOG INFO: archiving sds succeed."
+    
+  when: sds_archive.stat.exists
+
+#### finish archive sds files

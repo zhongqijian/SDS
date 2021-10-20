@@ -17,9 +17,9 @@
     - backup_DB
 - name: start backing up Intranet database 
   block:
-    - name: check flag DB_N file 
+    - name: check flag DB file
       stat: 
-        path: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db"
+        path: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/db"
       register: flagDB_file_n
 
     #### begin backing up database

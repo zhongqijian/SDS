@@ -15,7 +15,7 @@
   shell: |
     source ~/.bash_profile;
     dos2unix oracle_check_connection.sh;
-    sh oracle_check_connection.sh  {{DB_user1}} {{DB_pass1}} {{DB_user2}} {{DB_pass2}}
+    sh oracle_check_connection.sh  {{DB_user1}} {{DB_pass1}}
   args:
     chdir: "{{ansible_env.HOME}}/upgrade/deploy/"
   register: db_check

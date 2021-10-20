@@ -1,18 +1,8 @@
 ---
 #### begin checking app change
 
-- import_tasks: check_bas_app.yml
+- import_tasks: check_app.yml
   when: (inventory_hostname in groups['APP'])
-  tags:
-    - change_inspection
-
-- import_tasks: check_dxs_app.yml
-  when: (inventory_hostname in groups['IMT'])
-  tags:
-    - change_inspection
-
-- import_tasks: check_ngx_app.yml
-  when: (inventory_hostname in groups['NGX'])
   tags:
     - change_inspection
 

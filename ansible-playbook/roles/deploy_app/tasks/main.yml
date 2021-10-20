@@ -2,20 +2,8 @@
 #### begin updating app
 - name: start update app
   block:
-  #ngx
-    - import_tasks: update_ngx.yml
-      when: inventory_hostname in groups['NGX']
-      tags:
-        - update_APP
-
-  #imt_app
-    - import_tasks: update_imt_app.yml
-      when: inventory_hostname in groups['IMT']
-      tags:
-        - update_APP
-
   #bas_app_postrade
-    - import_tasks: update_app_postrade.yml
+    - import_tasks: update_app.yml
       when: inventory_hostname in groups['APP']
       tags:
       - update_APP

@@ -1,0 +1,63 @@
+---  
+#### begin checking APP update
+- name: GET out_postrade V{{version}} update file
+  stat: 
+    path: "{{ansible_env.HOME}}/"
+  register: app_file
+
+#创建data存放数据文件，与别的docker共享;config，存放配置信息以及证书等;log，将docker里面的日志信息映射出来;
+- name: clear postrade deploy file if it does not exist
+  file:
+    path: "{{ansible_env.HOME}}/{{ item }}"
+    state: directory
+  with_items:
+    - data
+    - config
+    - log
+
+############第一个版本，分发配置文件到config目录下,cfets.jks  jstack.license##########################
+#证书，UAT使用ST的
+- name: unarchive SDS V{{version}} package
+  unarchive:
+    src:  "{{src_path}}/SDS.tgz"
+    dest: "{{ansible_env.HOME}}/config/"
+
+#产生random.key并获取到数据库加密后的密码,待补充
+
+
+
+
+
+
+
+################################################################################3
+- name: start pull sds {{version}} docker images
+  block:
+    #拉取镜像
+    - name: pull {{version}} and run docker-compose
+      shell: |
+        docker-compose up -d
+
+    #升级中间件
+    - name: copy web.xml file 
+      copy:
+        src: web.xml
+        dest: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/web.xml" 
+    #update web.xml
+    - name: update web.xml
+      shell: |
+        cp -r {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/web.xml /home/ptd/tomcat7_postrade/conf/
+        cp -r {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/web.xml /home/ptd/tomcat7_cometDServer/conf/
+    
+    #update config
+    - name: update config
+      shell: |
+        source /etc/profile
+        set -m;sh /home/ptd/allBin/update_config.sh
+    #提示升级结果
+    - name: show out_postrade process info
+      debug:
+        msg: "LOG INFO: update out_postrade services succeed. "
+    
+  when: postrade_app_file.stat.exists
+#### finish updating app

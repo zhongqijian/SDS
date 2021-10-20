@@ -17,8 +17,8 @@
     - check_env
 
 #### finish checking connection user
-#- import_tasks: check_db.yml
-#  when: (inventory_hostname in groups['DB_CLIENT'])
-#  tags:
-#    - check_env
+- import_tasks: check_db.yml
+  when: (inventory_hostname in groups['DB_CLIENT'])
+  tags:
+    - check_env
 #### finish checking  database

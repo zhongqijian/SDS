@@ -2,7 +2,7 @@
 #### begin checking backupDB identify file
 - name: flag DB update file
   stat:
-    path: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/"
+    path: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/db/"
   register: flag_identify
 #### finish checking backupDB identify file
 #### begin backing up database and checking result
@@ -22,9 +22,9 @@
       shell: |
         dos2unix DB_backup.sh;
         source ~/.bash_profile
-        set -m;sh DB_backup.sh {{DB_user1}} {{DB_pass1}} {{DB_user2}} {{DB_pass2}}
+        set -m;sh DB_backup.sh {{DB_user1}} {{DB_pass1}}
       args:
-        chdir: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/"
+        chdir: "{{ansible_env.HOME}}/upgrade/deploy/V{{version}}/db/"
       async: 604800
       poll: 0
       register: db_backup_rc
@@ -39,13 +39,13 @@
     
     - name: copy database file to backup directory
       shell: |
-        cp -rf {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/backdb.log  ./
+        cp -rf {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/db/log/backdb.log  ./
       args:
         chdir: "{{ansible_env.HOME}}/upgrade/backup/{{version}}_{{update_timestamp.stdout}}/"
 
     - name: check backupDB logs
       shell: |
-        cat  {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/backdb.log
+        cat  {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/db/log/backdb.log
       register: backupDB_check
     
     - name: show backupDB logs
@@ -54,7 +54,7 @@
     
     - name: check incorrect backupDB logs 
       shell: |
-        cat  {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/backdb.log | grep -iv "{{database.regexp_exclude}}"|grep -iE "{{database.regexp}}" ;exit 0;
+        cat  {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/db/log/backdb.log | grep -iv "{{database.regexp_exclude}}"|grep -iE "{{database.regexp}}" ;exit 0;
       register: backupDB_ERROR
     
     - name: show incorrect backupDB 
@@ -63,7 +63,7 @@
     
     - name: check backupDB log pass
       fail:
-        msg: "LOG ERROR: backupDB log have errors, please check {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/app/db/log/backdb.log!"
+        msg: "LOG ERROR: backupDB log have errors, please check {{ansible_env.HOME}}/upgrade/deploy/V{{version}}/db/log/backdb.log!"
       when: ('ERROR' in backupDB_check.stdout)
 
     - name: show DB process info

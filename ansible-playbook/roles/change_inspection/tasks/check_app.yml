@@ -1,0 +1,16 @@
+---
+#### begin Verify upgrade results
+- name: begin checking app change
+  block:
+    - name: get After app upgrade version
+      shell: |
+        update_after_version=`docker ps`
+        if [ ${update_after_version} =~ {{version}} ]; then
+           exit 0;
+        else
+           exit 1;
+        fi
+    - name: show APP change info
+      debug:
+        msg: "LOG INFO: app change succeed. "
+#### finish checking app change
